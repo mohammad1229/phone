@@ -1,0 +1,11 @@
+node_modules/
+mobileshop.db
+mobileshop.db-journal
+mobileshop.db-wal
+mobileshop.db-shm
+*.exe
+*.log
+.env
+.DS_Store
+dist/
+out/

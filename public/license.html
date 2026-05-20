@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفعيل ترخيص النظام - FanniPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                        var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* Ambient light effects */
+        .ambient-light-1 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            filter: blur(150px);
+            border-radius: 50%;
+            top: 20%;
+            left: 10%;
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .ambient-light-2 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: #8b5cf6;
+            filter: blur(180px);
+            border-radius: 50%;
+            bottom: 10%;
+            right: 5%;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .license-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 520px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-area {
+            margin-bottom: 25px;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #a5b4fc, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.3));
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .license-card h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .company-tag {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .license-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .hwid-container {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 25px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .hwid-container:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(0, 0, 0, 0.35);
+        }
+
+        .hwid-label {
+            font-size: 0.78rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 6px;
+            text-align: right;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hwid-box {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            user-select: all;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .hwid-box i {
+            font-size: 1rem;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .hwid-box:hover i {
+            color: var(--primary);
+        }
+
+        .license-input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .license-input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            color: white;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .license-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .btn-activate {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-activate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .btn-whatsapp {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid rgba(37, 211, 102, 0.2);
+            border-radius: 12px;
+            background: rgba(37, 211, 102, 0.08);
+            color: #25D366;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            margin-top: 12px;
+            box-sizing: border-box;
+        }
+
+        .btn-whatsapp:hover {
+            background: #25D366;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .dev-login-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #a78bfa;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .dev-login-link:hover {
+            color: #c084fc;
+        }
+
+        #msg {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-success {
+            display: block !important;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: #34d399;
+        }
+
+        .msg-danger {
+            display: block !important;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: #f87171;
+        }
+
+        .msg-info {
+            display: block !important;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #60a5fa;
+        }
+
+        .sync-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Auto verification bar */
+        .online-check-bar {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99, 102, 241, 0.12);
+            color: #a5b4fc;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        /* Explicit input visibility overrides for Autofill/Themes */
+        .license-input {
+            color: #ffffff !important;
+            background-color: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .license-input:-webkit-autofill,
+        .license-input:-webkit-autofill:hover, 
+        .license-input:-webkit-autofill:focus, 
+        .license-input:-webkit-autofill:active {
+            -webkit-text-fill-color: #ffffff !important;
+            -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light-1"></div>
+    <div class="ambient-light-2"></div>
+
+    <div class="license-card">
+        <div class="logo-area">
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h2 onclick="handleSecretClick()" style="cursor: pointer; user-select: none;">نظام إدارة المحلات والمبيعات</h2>
+            <span class="company-tag">GoNet Software Engineering</span>
+        </div>
+        
+        <p id="license-subtitle">النسخة غير مفعلة على هذا الجهاز. رمز الترخيص مشفر رياضياً ولا يعمل إلا مع رمز الجهاز المخصص له أدناه لمنع مشاركة الترخيص.</p>
+        
+        <!-- CLIENT ACTIVATION VIEW -->
+        <div id="client-view">
+            <div class="hwid-container" onclick="copyHWID()" title="اضغط لنسخ رمز الجهاز">
+                <div class="hwid-label">
+                    <span>رمز الجهاز الفريد (Hardware ID)</span>
+                    <span id="copied-indicator" style="color: var(--success); opacity: 0; transition: opacity 0.2s; font-size: 0.75rem;"><i class="fa-solid fa-circle-check"></i> تم النسخ</span>
+                </div>
+                <div class="hwid-box" id="hwid-display">
+                    <span>جاري القراءة...</span>
+                    <i class="fa-solid fa-copy"></i>
+                </div>
+            </div>
+            
+            <div class="license-input-wrapper">
+                <input type="text" id="shop-name-input" class="license-input" placeholder="اسم المحل أو الشركة..." autocomplete="off" style="letter-spacing: normal; margin-bottom: 15px;">
+                <input type="text" id="license-key" class="license-input" placeholder="أدخل كود التفعيل المكون من 10 أرقام..." autocomplete="off">
+            </div>
+            
+            <button class="btn-activate" onclick="activateLicense()">
+                <i class="fa-solid fa-key"></i> 
+                <span>تفعيل النظام الآن</span>
+            </button>
+            
+            <a id="client-wa-link" href="#" target="_blank" class="btn-whatsapp">
+                <i class="fa-brands fa-whatsapp"></i> 
+                <span>طلب كود التفعيل من المطور</span>
+            </a>
+            
+            <div class="security-badge">
+                <i class="fa-solid fa-lock"></i> حماية مشفرة مرتبطة بالعتاد
+            </div>
+            
+            <div class="online-check-bar">
+                <div class="sync-spinner"></div>
+                <span>جاري البحث عن ترخيص نشط تلقائياً عبر الإنترنت...</span>
+            </div>
+
+            <a href="#" onclick="showDevLogin(event)" class="dev-login-link">
+                <i class="fa-solid fa-user-gear"></i> تسجيل دخول المهندسين والدعم الفني
+            </a>
+        </div>
+        
+        <!-- DEVELOPER LOGIN VIEW -->
+        <div id="dev-view" style="display:none;">
+            <p style="margin-bottom: 20px; color: var(--primary);">لوحة التحقق السرية لمهندسي التطوير والدعم الفني لشركة GoNet.</p>
+            
+            <div class="license-input-wrapper">
+                <input type="text" id="dev-username" class="license-input" placeholder="اسم مستخدم المطور..." autocomplete="off" style="letter-spacing: normal;">
+            </div>
+            
+            <div class="license-input-wrapper">
+                <input type="password" id="dev-password" class="license-input" placeholder="كلمة المرور السرية..." autocomplete="off" style="letter-spacing: normal;">
+            </div>
+            
+            <button class="btn-activate" onclick="submitDevLogin()" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); margin-top: 15px;">
+                <i class="fa-solid fa-right-to-bracket"></i> 
+                <span>دخول لوحة التحكم</span>
+            </button>
+            
+            <a href="#" onclick="hideDevLogin(event)" class="dev-login-link" style="color: var(--text-muted);">
+                <i class="fa-solid fa-arrow-left"></i> العودة لشاشة التفعيل
+            </a>
+        </div>
+
+        <!-- ADMIN SETUP VIEW (FOR THE FIRST TIME ONLY) -->
+        <div id="admin-setup-view" style="display:none;">
+            <p style="margin-bottom: 20px; color: var(--success); font-weight: bold;"><i class="fa-solid fa-user-shield"></i> خطوة إعداد المدير العام (للمرة الأولى)</p>
+            
+            <div class="license-input-wrapper">
+                <input type="text" id="admin-fullname" class="license-input" placeholder="الاسم الكامل للمدير..." autocomplete="off" style="letter-spacing: normal; margin-bottom: 15px;">
+            </div>
+            
+            <div class="license-input-wrapper">
+                <input type="text" id="admin-username" class="license-input" placeholder="اسم مستخدم المدير (مثال: admin)..." autocomplete="off" style="letter-spacing: normal; margin-bottom: 15px;">
+            </div>
+            
+            <div class="license-input-wrapper">
+                <input type="password" id="admin-password" class="license-input" placeholder="كلمة المرور الجديدة..." autocomplete="off" style="letter-spacing: normal; margin-bottom: 15px;">
+            </div>
+
+            <div class="license-input-wrapper">
+                <input type="text" id="admin-phone" class="license-input" placeholder="رقم الهاتف (اختياري)..." autocomplete="off" style="letter-spacing: normal;">
+            </div>
+            
+            <button class="btn-activate" onclick="setupAdminAccount()" style="background: linear-gradient(135deg, var(--success), #059669); margin-top: 15px;">
+                <i class="fa-solid fa-check-double"></i> 
+                <span>إنشاء الحساب ودخول النظام</span>
+            </button>
+        </div>
+        
+        <div id="msg"></div>
+    </div>
+
+    <script>
+        let currentHWID = '';
+        
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/license/status');
+                const data = await res.json();
+                currentHWID = data.hwid;
+                document.getElementById('hwid-display').querySelector('span').textContent = currentHWID;
+                
+                // Prepopulate WhatsApp text
+                const devPhone = "972566000140";
+                const msg = encodeURIComponent(`مرحباً GoNet، أود الحصول على كود تفعيل لنظام المبيعات FanniPro.\n\nرمز جهاز الصيانة الخاص بي (HWID) هو:\n${currentHWID}`);
+                document.getElementById('client-wa-link').href = `https://wa.me/${devPhone}?text=${msg}`;
+
+                if(data.isActivated) {
+                    if (data.adminSetupRequired) {
+                        // Switch to admin setup view
+                        document.getElementById('client-view').style.display = 'none';
+                        document.getElementById('dev-view').style.display = 'none';
+                        document.getElementById('admin-setup-view').style.display = 'block';
+                        document.getElementById('license-subtitle').textContent = 'يرجى تهيئة حساب المدير العام للدخول للنظام.';
+                        // Hide online check bar or other client indicators
+                        const onlineBar = document.querySelector('.online-check-bar');
+                        if (onlineBar) onlineBar.style.display = 'none';
+                    } else {
+                        const msgEl = document.getElementById('msg');
+                        msgEl.textContent = 'تم التحقق بنجاح! جاري الانتقال لوجهة النظام...';
+                        msgEl.className = 'msg-success';
+                        setTimeout(() => { window.location.href = '/'; }, 1000);
+                    }
+                }
+            } catch(e) {
+                document.getElementById('hwid-display').querySelector('span').textContent = "خطأ في الاتصال بالخادم المحلي";
+            }
+        }
+
+        function copyHWID() {
+            if(!currentHWID) return;
+            navigator.clipboard.writeText(currentHWID);
+            
+            const indicator = document.getElementById('copied-indicator');
+            indicator.style.opacity = '1';
+            
+            const box = document.getElementById('hwid-display').parentNode;
+            box.style.borderColor = 'var(--success)';
+            
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                box.style.borderColor = 'rgba(255,255,255,0.05)';
+            }, 2000);
+        }
+
+        async function activateLicense() {
+            const key = document.getElementById('license-key').value.trim();
+            const shop_name = document.getElementById('shop-name-input').value.trim();
+            const msgEl = document.getElementById('msg');
+            
+            if(!shop_name) {
+                msgEl.textContent = 'الرجاء إدخال اسم المحل أو الشركة';
+                msgEl.className = 'msg-danger';
+                return;
+            }
+            if(!key) {
+                msgEl.textContent = 'الرجاء إدخال كود التفعيل أولاً';
+                msgEl.className = 'msg-danger';
+                return;
+            }
+            
+            msgEl.textContent = 'جاري التحقق من كود التفعيل وتطابق رمز هذا الجهاز...';
+            msgEl.className = 'msg-info';
+            
+            try {
+                const res = await fetch('/api/license/activate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, shop_name })
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    msgEl.textContent = 'تم قبول كود التفعيل بنجاح! جاري الانتقال للخطوة التالية...';
+                    msgEl.className = 'msg-success';
+                    setTimeout(() => { fetchStatus(); }, 1000);
+                } else {
+                    msgEl.textContent = data.message;
+                    msgEl.className = 'msg-danger';
+                }
+            } catch(e) {
+                msgEl.textContent = 'فشل الاتصال بالخادم المحلي للتأكيد.';
+                msgEl.className = 'msg-danger';
+            }
+        }
+
+        async function setupAdminAccount() {
+            const fullname = document.getElementById('admin-fullname').value.trim();
+            const username = document.getElementById('admin-username').value.trim();
+            const password = document.getElementById('admin-password').value.trim();
+            const phone = document.getElementById('admin-phone').value.trim();
+            const msgEl = document.getElementById('msg');
+
+            if (!fullname || !username || !password) {
+                msgEl.textContent = 'يرجى ملء الاسم، اسم المستخدم وكلمة المرور';
+                msgEl.className = 'msg-danger';
+                return;
+            }
+
+            msgEl.textContent = 'جاري إنشاء حساب المدير العام وتهيئة النظام...';
+            msgEl.className = 'msg-info';
+
+            try {
+                const res = await fetch('/api/license/setup-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullname, username, password, phone })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    msgEl.textContent = 'تم إنشاء حساب المدير بنجاح! جاري دخول النظام...';
+                    msgEl.className = 'msg-success';
+                    setTimeout(() => { window.location.href = '/'; }, 1500);
+                } else {
+                    msgEl.textContent = data.message;
+                    msgEl.className = 'msg-danger';
+                }
+            } catch (e) {
+                msgEl.textContent = 'خطأ في الاتصال بالخادم لتهيئة المدير';
+                msgEl.className = 'msg-danger';
+            }
+        }
+
+        function showDevLogin(e) {
+            if(e) e.preventDefault();
+            document.getElementById('client-view').style.display = 'none';
+            document.getElementById('dev-view').style.display = 'block';
+            document.getElementById('license-subtitle').textContent = 'نظام التحقق وسجل الصيانة الداخلي لشركة GoNet.';
+            document.getElementById('msg').style.display = 'none';
+        }
+
+        function hideDevLogin(e) {
+            if(e) e.preventDefault();
+            document.getElementById('dev-view').style.display = 'none';
+            document.getElementById('client-view').style.display = 'block';
+            document.getElementById('license-subtitle').textContent = 'النسخة غير مفعلة على هذا الجهاز. رمز الترخيص مشفر رياضياً ولا يعمل إلا مع رمز الجهاز المخصص له أدناه لمنع مشاركة الترخيص.';
+            document.getElementById('msg').style.display = 'none';
+        }
+
+        async function submitDevLogin() {
+            const username = document.getElementById('dev-username').value.trim();
+            const pass = document.getElementById('dev-password').value.trim();
+            const msgEl = document.getElementById('msg');
+            
+            if(!username || !pass) {
+                msgEl.textContent = 'يرجى إدخال اسم المستخدم وكلمة المرور';
+                msgEl.className = 'msg-danger';
+                return;
+            }
+            
+            msgEl.textContent = 'جاري التحقق من الصلاحيات الفنية...';
+            msgEl.className = 'msg-info';
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password: pass })
+                });
+                const data = await res.json();
+                if(data.success && data.redirect) {
+                    msgEl.textContent = 'مرحباً بالمهندس! جاري توجيهك للوحة التحكم...';
+                    msgEl.className = 'msg-success';
+                    setTimeout(() => { window.location.href = data.redirect; }, 1000);
+                } else {
+                    msgEl.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+                    msgEl.className = 'msg-danger';
+                }
+            } catch(e) {
+                msgEl.textContent = 'خطأ في الاتصال بالخادم المحلي';
+                msgEl.className = 'msg-danger';
+            }
+        }
+
+        let secretClickCount = 0;
+        let secretClickTimer = null;
+        function handleSecretClick() {
+            secretClickCount++;
+            if(secretClickTimer) clearTimeout(secretClickTimer);
+            
+            if(secretClickCount >= 5) {
+                secretClickCount = 0;
+                const pass = prompt("الرجاء إدخال كلمة مرور المطور:");
+                if(pass === "fannipro2026") {
+                    window.location.href = '/superadmin.html';
+                } else if (pass) {
+                    alert("رمز التحقق غير صحيح!");
+                }
+            } else {
+                secretClickTimer = setTimeout(() => { secretClickCount = 0; }, 2000);
+            }
+        }
+
+        fetchStatus();
+        setInterval(fetchStatus, 5000);
+    </script>
+</body>
+</html>
