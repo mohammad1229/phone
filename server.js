@@ -367,6 +367,20 @@ app.post('/api/login', (req, res) => {
       return res.json({ success: true, redirect: '/superadmin.html', message: 'مرحباً بالمطور' });
     }
 
+    // Check if database contains any users (to detect unsynced db on cloud)
+    let usersCount = 0;
+    try {
+      const row = db.prepare('SELECT COUNT(*) as count FROM users').get();
+      if (row) usersCount = row.count;
+    } catch(e) {}
+
+    if (usersCount === 0) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'قاعدة البيانات فارغة على السيرفر السحابي. يرجى الذهاب إلى إعدادات البرنامج على الكمبيوتر وإدخال رابط السيرفر السحابي ثم الحفظ للبدء بالمزامنة الأولى.' 
+      });
+    }
+
     const user = db.prepare('SELECT * FROM users WHERE username = ? AND active = 1').get(username);
     if (!user) return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     

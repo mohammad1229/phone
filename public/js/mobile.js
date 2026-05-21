@@ -194,9 +194,30 @@ window.submitMobileLogin = async function() {
 
 // 3. Load Dashboard Data
 async function loadMobileDashboard() {
+    const errorBanner = document.getElementById('dashboard-error');
+    if (errorBanner) {
+        errorBanner.style.display = 'none';
+        errorBanner.textContent = '';
+    }
+    
     try {
         // Fetch Settings for Shop Title
         const settingsRes = await fetch(`${activeServerUrl}/api/settings`);
+        if (!settingsRes.ok) {
+            if (settingsRes.status === 403) {
+                const errData = await settingsRes.json();
+                if (errData.message === 'unlicensed') {
+                    showDashboardError("🚨 النظام غير نشط على السيرفر السحابي. يرجى تفعيل البرنامج على الكمبيوتر ومزامنة البيانات لتفعيل التطبيق تلقائياً.");
+                    return;
+                } else if (errData.message === 'setup_required') {
+                    showDashboardError("🚨 يرجى إكمال إعداد المسؤول على برنامج الكمبيوتر أولاً.");
+                    return;
+                }
+            }
+            showDashboardError(`🚨 فشل في تحميل الإعدادات من السيرفر. (رمز الخطأ: ${settingsRes.status})`);
+            return;
+        }
+        
         const settingsData = await settingsRes.json();
         if(settingsData.success && settingsData.data) {
             document.getElementById('mobile-shop-title').textContent = settingsData.data.shop_name || "gonet phone";
@@ -204,6 +225,10 @@ async function loadMobileDashboard() {
         
         // Fetch Dashboard Stats
         const statsRes = await fetch(`${activeServerUrl}/api/dashboard/stats`);
+        if (!statsRes.ok) {
+            showDashboardError(`🚨 فشل في تحميل إحصائيات لوحة التحكم. (رمز الخطأ: ${statsRes.status})`);
+            return;
+        }
         const statsData = await statsRes.json();
         if(statsData.success && statsData.data) {
             document.getElementById('m-stat-sales').textContent = statsData.data.sales_today + " شيكل";
@@ -214,6 +239,10 @@ async function loadMobileDashboard() {
         
         // Fetch Recent Repairs
         const repairsRes = await fetch(`${activeServerUrl}/api/repairs`);
+        if (!repairsRes.ok) {
+            showDashboardError(`🚨 فشل في تحميل أجهزة الصيانة. (رمز الخطأ: ${repairsRes.status})`);
+            return;
+        }
         const repairsData = await repairsRes.json();
         const listDiv = document.getElementById('mobile-repairs-list');
         listDiv.innerHTML = '';
@@ -248,7 +277,22 @@ async function loadMobileDashboard() {
         }
     } catch(e) {
         console.error("Error loading dashboard data", e);
+        showDashboardError("🚨 خطأ في الاتصال بالشبكة أو السيرفر غير متصل.");
     }
+}
+
+function showDashboardError(msg) {
+    const errorBanner = document.getElementById('dashboard-error');
+    if (errorBanner) {
+        errorBanner.textContent = msg;
+        errorBanner.style.display = 'block';
+    }
+    // Set default/empty status values
+    document.getElementById('m-stat-sales').textContent = "-";
+    document.getElementById('m-stat-repairs').textContent = "-";
+    document.getElementById('m-stat-lowstock').textContent = "-";
+    document.getElementById('m-stat-customers').textContent = "-";
+    document.getElementById('mobile-repairs-list').innerHTML = `<div style="text-align:center; padding:15px; color:var(--danger); font-size:0.85rem;">${msg}</div>`;
 }
 
 // 4. Barcode Camera Scanner (Uses Native WebRTC camera access wrapper)
