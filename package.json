@@ -7,7 +7,7 @@
     "dev": "nodemon server.js",
     "start": "electron .",
     "build": "electron-builder --win",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "node postinstall.js"
   },
   "build": {
     "appId": "com.gonetphone.pos",
