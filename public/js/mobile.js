@@ -2,12 +2,45 @@
 let activeServerUrl = "";
 let currentToken = "";
 
+function constructServerUrl(input) {
+    let targetUrl = input.trim();
+    if (!targetUrl) return "";
+    
+    // Check if it already has http/https
+    if (!/^https?:\/\//i.test(targetUrl)) {
+        // If it looks like an internet domain name (like onrender.com) and doesn't contain a colon, use https
+        if (targetUrl.includes('.') && !/^[0-9.]+$/.test(targetUrl) && !targetUrl.includes(':')) {
+            targetUrl = `https://${targetUrl}`;
+        } else {
+            targetUrl = `http://${targetUrl}`;
+        }
+    }
+    
+    // Check if we need to append port :3000
+    // We only append port 3000 if there's no port already specified AND it looks like a local address
+    const hasPort = targetUrl.split('//')[1].includes(':');
+    if (!hasPort) {
+        const host = targetUrl.split('//')[1].toLowerCase();
+        const isLocal = host.includes('localhost') || 
+                        host.includes('127.0.0.1') || 
+                        host.startsWith('192.168.') || 
+                        host.startsWith('10.') || 
+                        host.startsWith('172.16.') || 
+                        host.startsWith('172.31.') ||
+                        /^[0-9.]+$/.test(host); // numeric IP
+        if (isLocal) {
+            targetUrl = `${targetUrl}:3000`;
+        }
+    }
+    return targetUrl;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Load saved server connection
     const savedIp = localStorage.getItem('gonet_phone_server_ip');
     if (savedIp) {
         document.getElementById('server-ip').value = savedIp;
-        activeServerUrl = `http://${savedIp}:3000`;
+        activeServerUrl = constructServerUrl(savedIp);
         // Try to load cached token
         const savedToken = localStorage.getItem('gonet_phone_token');
         if (savedToken) {
@@ -74,7 +107,7 @@ window.testAndSaveConnection = async function() {
     const errorDiv = document.getElementById('conn-error');
     
     if (!ip) {
-        errorDiv.textContent = "الرجاء إدخال عنوان IP صحيح";
+        errorDiv.textContent = "الرجاء إدخال عنوان IP أو رابط السيرفر صحيح";
         return;
     }
     
@@ -82,23 +115,25 @@ window.testAndSaveConnection = async function() {
     errorDiv.style.color = "var(--warning)";
     
     try {
-        // Ping the Express API on port 3000
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
+        const targetUrl = constructServerUrl(ip);
         
-        const res = await fetch(`http://${ip}:3000/api/license/status`, { signal: controller.signal });
+        // Ping the Express API
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 seconds timeout
+        
+        const res = await fetch(`${targetUrl}/api/license/status`, { signal: controller.signal });
         clearTimeout(timeoutId);
         
         if (res.ok) {
             localStorage.setItem('gonet_phone_server_ip', ip);
-            activeServerUrl = `http://${ip}:3000`;
+            activeServerUrl = targetUrl;
             showScreen('login');
         } else {
-            errorDiv.textContent = "السيرفر لا يستجيب بالشكل الصحيح.";
+            errorDiv.textContent = "السيرفر لا يستجيب بالشكل الصحيح. تأكد من أن السيرفر يعمل.";
             errorDiv.style.color = "var(--danger)";
         }
     } catch(e) {
-        errorDiv.textContent = "فشل الاتصال. تأكد من أن السيرفر يعمل على الكمبيوتر الرئيسي وأن الهاتف متصل بنفس شبكة الـ Wi-Fi.";
+        errorDiv.textContent = "فشل الاتصال. تأكد من أن السيرفر يعمل، وأن العنوان مكتوب بشكل صحيح، وأن هاتفك متصل بالإنترنت.";
         errorDiv.style.color = "var(--danger)";
     }
 }
