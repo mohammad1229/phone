@@ -26,6 +26,7 @@
       "output": "dist"
     },
     "win": {
+      "icon": "public/phone_care_logo.png",
       "target": [
         "nsis"
       ]

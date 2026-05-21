@@ -14,6 +14,7 @@ function createSplashWindow() {
     resizable: false,
     alwaysOnTop: true,
     center: true,
+    icon: path.join(__dirname, 'public', 'phone_care_logo.png'),
     webPreferences: {
       nodeIntegration: false
     }
@@ -35,6 +36,7 @@ function createMainWindow() {
     title: 'gonet phone',
     autoHideMenuBar: true,
     show: false, // Hidden until ready
+    icon: path.join(__dirname, 'public', 'phone_care_logo.png'),
     webPreferences: {
       nodeIntegration: false
     }

@@ -136,6 +136,35 @@ async function uploadDbToCloud() {
 
     if (uploadRes.ok) {
       console.log('✅ [Sync] Database successfully replicated to cloud storage!');
+      if (!process.env.RENDER) {
+        try {
+          const renderUrlRow = activeDb.prepare("SELECT value FROM settings WHERE key = 'render_url'").get();
+          if (renderUrlRow && renderUrlRow.value) {
+            let renderUrl = renderUrlRow.value.trim();
+            if (renderUrl) {
+              if (!/^https?:\/\//i.test(renderUrl)) {
+                renderUrl = 'https://' + renderUrl;
+              }
+              renderUrl = renderUrl.replace(/\/+$/, '');
+              console.log(`📡 [Sync] Notifying Render cloud server at: ${renderUrl}/api/sync/reload`);
+              fetch(`${renderUrl}/api/sync/reload`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${SUPABASE_KEY}`,
+                  'Content-Type': 'application/json'
+                }
+              }).then(res => {
+                if (res.ok) console.log('✅ [Sync] Render cloud server notified and reloaded successfully.');
+                else console.warn(`⚠️ [Sync] Render notification returned status: ${res.status}`);
+              }).catch(err => {
+                console.warn('⚠️ [Sync] Failed to notify Render cloud server:', err.message);
+              });
+            }
+          }
+        } catch(e) {
+          console.error('❌ [Sync] Failed to notify Render server:', e.message);
+        }
+      }
     } else {
       const errText = await uploadRes.text();
       console.error(`❌ [Sync] Replication failed with status ${uploadRes.status}: ${errText}`);
@@ -211,9 +240,52 @@ async function uploadLogoToCloud(fileBuffer, originalName, mimeType) {
   }
 }
 
+/**
+ * Downloads database from Supabase Storage asynchronously
+ */
+async function downloadDbFromCloud() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.log('📡 [Sync] Supabase config missing. Skipping download.');
+    return false;
+  }
+
+  const DB_DIR = process.env.USER_DATA_PATH || path.join(__dirname, 'data');
+  const DB_PATH = path.join(DB_DIR, 'mobileshop.db');
+
+  console.log(`📡 [Sync] Downloading cloud database from: ${SUPABASE_URL}/storage/v1/object/authenticated/${BUCKET_NAME}/mobileshop.db`);
+  try {
+    const url = `${SUPABASE_URL}/storage/v1/object/authenticated/${BUCKET_NAME}/mobileshop.db`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey': SUPABASE_KEY
+      }
+    });
+
+    if (res.status === 200) {
+      const buffer = await res.arrayBuffer();
+      if (!fs.existsSync(DB_DIR)) {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+      }
+      fs.writeFileSync(DB_PATH, Buffer.from(buffer));
+      console.log('✅ [Sync] Database successfully downloaded and replaced locally!');
+      return true;
+    } else {
+      const errText = await res.text();
+      console.error(`⚠️ [Sync] Failed to download database. Status: ${res.status}. Error: ${errText}`);
+      return false;
+    }
+  } catch (err) {
+    console.error('❌ [Sync] Network or file error while downloading database:', err);
+    return false;
+  }
+}
+
 module.exports = {
   setDatabaseInstance,
   downloadDbSync,
+  downloadDbFromCloud,
   uploadDbToCloud,
   scheduleDbSync,
   uploadLogoToCloud

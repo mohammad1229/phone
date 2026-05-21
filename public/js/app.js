@@ -120,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
             shop_name: document.getElementById('set-shop-name').value,
             shop_phone: document.getElementById('set-shop-phone').value,
             shop_address: document.getElementById('set-shop-address').value,
-            currency: document.getElementById('set-currency').value
+            currency: document.getElementById('set-currency').value,
+            render_url: document.getElementById('set-render-url')?.value || ''
         };
         const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
@@ -516,6 +517,9 @@ async function loadSettings() {
         document.getElementById('set-shop-phone').value = data.data.shop_phone || '';
         document.getElementById('set-shop-address').value = data.data.shop_address || '';
         document.getElementById('set-currency').value = data.data.currency || 'شيكل';
+        if (document.getElementById('set-render-url')) {
+            document.getElementById('set-render-url').value = data.data.render_url || '';
+        }
         globalShopName    = data.data.shop_name    || "FanniPro";
         globalShopPhone   = data.data.shop_phone   || "";
         globalShopAddress = data.data.shop_address || "";

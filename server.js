@@ -152,12 +152,12 @@ function validate10DigitCode(code, hwid) {
   }
 }
 
-function validateLicenseKey(key) {
+function validateLicenseKey(key, targetHwid = HWID) {
   try {
     key = key.trim();
     // 1. Support new 10-Digit Numeric Activation Code
     if (/^\d{10}$/.test(key)) {
-      return validate10DigitCode(key, HWID);
+      return validate10DigitCode(key, targetHwid);
     }
     
     // 2. Support old signature format (Legacy/Fallback)
@@ -166,7 +166,7 @@ function validateLicenseKey(key) {
     const khwid = kp[0];
     const expiry = kp[1];
     const sig = kp[2];
-    if(khwid !== HWID) return false;
+    if(khwid !== targetHwid) return false;
     const expectedSig = crypto.createHash('sha256').update(khwid + expiry + SECRET_KEY).digest('hex').substring(0, 10).toUpperCase();
     if(sig !== expectedSig) return false;
     return { valid: true, expiry: expiry };
@@ -226,7 +226,7 @@ app.use((req, res, next) => {
 
 // License Check Middleware
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/license') || req.path.startsWith('/api/superadmin') || req.path === '/api/login' || req.path === '/license.html' || req.path === '/superadmin.html' || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/webfonts/')) {
+  if (req.path.startsWith('/api/license') || req.path.startsWith('/api/superadmin') || req.path === '/api/login' || req.path === '/api/sync/reload' || req.path === '/license.html' || req.path === '/superadmin.html' || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/webfonts/')) {
     return next();
   }
   
@@ -245,8 +245,9 @@ app.use((req, res, next) => {
   let isActivated = false;
 
   if (licenseKey) {
-    const validation = validateLicenseKey(licenseKey);
-    const hwidMatches = !licenseHwid || (licenseHwid === HWID);
+    const activeHwid = (process.env.RENDER && licenseHwid) ? licenseHwid : HWID;
+    const validation = validateLicenseKey(licenseKey, activeHwid);
+    const hwidMatches = !licenseHwid || (licenseHwid === activeHwid);
     
     if (validation && validation.valid && hwidMatches) {
       const today = new Date();
@@ -1205,23 +1206,50 @@ cron.schedule('59 23 * * *', () => {
   } catch(e) { console.error('Auto-Backup failed:', e); }
 });
 
+app.post('/api/sync/reload', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const SUPABASE_KEY = process.env.SUPABASE_KEY;
+  if (!authHeader || authHeader !== `Bearer ${SUPABASE_KEY}`) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  try {
+    console.log('📡 [Sync] Reload request received. Redownloading database...');
+    const success = await sync.downloadDbFromCloud();
+    if (success) {
+      db.reopen();
+      console.log('✅ [Sync] Database connection successfully reloaded with new cloud file!');
+      return res.json({ success: true, message: 'Database reloaded successfully!' });
+    } else {
+      return res.status(500).json({ success: false, message: 'Failed to download database' });
+    }
+  } catch (err) {
+    console.error('❌ [Sync] Error reloading database:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ================== LICENSE API ==================
 app.get('/api/license/status', async (req, res) => {
   let expiry = 'غير مفعل';
   let isActivated = false;
   let remainingDays = 0;
   let licenseKey = '';
+  let licenseHwid = '';
   try {
     const keyRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('license_key');
     const expiryRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('license_expiry');
+    const hwidRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('license_hwid');
     if(keyRow) licenseKey = keyRow.value;
     if(expiryRow && expiryRow.value) {
       expiry = expiryRow.value;
     }
+    if(hwidRow) licenseHwid = hwidRow.value;
   } catch(e) {}
   
   if (licenseKey) {
-    const validation = validateLicenseKey(licenseKey);
+    const activeHwid = (process.env.RENDER && licenseHwid) ? licenseHwid : HWID;
+    const validation = validateLicenseKey(licenseKey, activeHwid);
     if (validation && validation.valid) {
       expiry = validation.expiry;
       const today = new Date();
@@ -1309,8 +1337,11 @@ app.post('/api/license/setup-admin', (req, res) => {
     let isActivated = false;
     try {
       const keyRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('license_key');
+      const hwidRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('license_hwid');
+      const licenseHwid = hwidRow ? hwidRow.value : '';
       if (keyRow && keyRow.value) {
-        const validation = validateLicenseKey(keyRow.value);
+        const activeHwid = (process.env.RENDER && licenseHwid) ? licenseHwid : HWID;
+        const validation = validateLicenseKey(keyRow.value, activeHwid);
         if (validation && validation.valid) {
           isActivated = true;
         }

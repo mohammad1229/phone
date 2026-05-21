@@ -41,12 +41,41 @@ try {
 const sync = require('./sync');
 sync.downloadDbSync();
 
-const db = new Database(DB_PATH);
-sync.setDatabaseInstance(db);
+let dbInstance = new Database(DB_PATH);
 
 // Enable WAL mode for better performance
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+dbInstance.pragma('journal_mode = WAL');
+dbInstance.pragma('foreign_keys = ON');
+
+const db = new Proxy({}, {
+  get(target, prop) {
+    if (prop === 'reopen') {
+      return (newPath) => {
+        console.log('🔄 [DB Proxy] Reopening database connection...');
+        try {
+          dbInstance.close();
+        } catch(e) {
+          console.error('⚠️ [DB Proxy] Error closing old db instance:', e);
+        }
+        dbInstance = new Database(newPath || DB_PATH);
+        dbInstance.pragma('journal_mode = WAL');
+        dbInstance.pragma('foreign_keys = ON');
+        sync.setDatabaseInstance(dbInstance);
+        console.log('✅ [DB Proxy] Database connection successfully reopened!');
+      };
+    }
+    if (prop === 'close') {
+      return () => dbInstance.close();
+    }
+    const val = dbInstance[prop];
+    if (typeof val === 'function') {
+      return val.bind(dbInstance);
+    }
+    return val;
+  }
+});
+
+sync.setDatabaseInstance(dbInstance);
 
 function initDatabase() {
   db.exec(`
@@ -370,7 +399,8 @@ function initDatabase() {
     ['license_key', ''],
     ['license_expiry', ''],
     ['license_hwid', ''],
-    ['admin_setup_completed', '0']
+    ['admin_setup_completed', '0'],
+    ['render_url', '']
   ];
   const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
   settingsData.forEach(([k, v]) => insertSetting.run(k, v));
