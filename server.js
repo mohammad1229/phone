@@ -121,6 +121,7 @@ function generateHardwareId() {
 }
 const HWID = generateHardwareId();
 const SECRET_KEY = "FANNIPRO_SECRET_2026";
+const isCloudServer = !process.versions.electron || process.env.RENDER || process.env.PORT;
 
 // 10-Digit Mathematical Offline Licensing Engine
 function validate10DigitCode(code, hwid) {
@@ -226,7 +227,7 @@ app.use((req, res, next) => {
 
 // License Check Middleware
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/license') || req.path.startsWith('/api/superadmin') || req.path === '/api/login' || req.path === '/api/sync/reload' || req.path === '/license.html' || req.path === '/superadmin.html' || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/webfonts/')) {
+  if (req.path.startsWith('/api/license') || req.path.startsWith('/api/superadmin') || req.path === '/api/login' || req.path === '/api/sync/reload' || req.path === '/license.html' || req.path === '/mobile.html' || req.path === '/phone_care_logo.png' || req.path === '/superadmin.html' || req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/webfonts/')) {
     return next();
   }
   
@@ -245,7 +246,7 @@ app.use((req, res, next) => {
   let isActivated = false;
 
   if (licenseKey) {
-    const activeHwid = (process.env.RENDER && licenseHwid) ? licenseHwid : HWID;
+    const activeHwid = (isCloudServer && licenseHwid) ? licenseHwid : HWID;
     const validation = validateLicenseKey(licenseKey, activeHwid);
     const hwidMatches = !licenseHwid || (licenseHwid === activeHwid);
     
@@ -297,7 +298,7 @@ app.use((req, res, next) => {
   }
   
   // If asking for UI and (not activated or admin setup not completed)
-  if (!req.path.startsWith('/api/') && req.path !== '/superadmin.html') {
+  if (!req.path.startsWith('/api/') && req.path !== '/superadmin.html' && req.path !== '/mobile.html' && req.path !== '/phone_care_logo.png') {
     if (!isActivated || !adminSetupCompleted) {
       return res.redirect('/license.html');
     }
@@ -1248,7 +1249,7 @@ app.get('/api/license/status', async (req, res) => {
   } catch(e) {}
   
   if (licenseKey) {
-    const activeHwid = (process.env.RENDER && licenseHwid) ? licenseHwid : HWID;
+    const activeHwid = (isCloudServer && licenseHwid) ? licenseHwid : HWID;
     const validation = validateLicenseKey(licenseKey, activeHwid);
     if (validation && validation.valid) {
       expiry = validation.expiry;
@@ -1340,7 +1341,7 @@ app.post('/api/license/setup-admin', (req, res) => {
       const hwidRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('license_hwid');
       const licenseHwid = hwidRow ? hwidRow.value : '';
       if (keyRow && keyRow.value) {
-        const activeHwid = (process.env.RENDER && licenseHwid) ? licenseHwid : HWID;
+        const activeHwid = (isCloudServer && licenseHwid) ? licenseHwid : HWID;
         const validation = validateLicenseKey(keyRow.value, activeHwid);
         if (validation && validation.valid) {
           isActivated = true;

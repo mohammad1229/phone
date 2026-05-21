@@ -111,7 +111,7 @@ window.testAndSaveConnection = async function() {
         return;
     }
     
-    errorDiv.textContent = "جاري التحقق من الاتصال بالسيرفر...";
+    errorDiv.textContent = "جاري التحقق من الاتصال بالسيرفر... (إذا كنت تتصل بالخادم السحابي لأول مرة، فقد يستغرق تشغيله دقيقة كاملة للاستيقاظ من وضع الخمول، يرجى الانتظار...)";
     errorDiv.style.color = "var(--warning)";
     
     try {
@@ -119,7 +119,7 @@ window.testAndSaveConnection = async function() {
         
         // Ping the Express API
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 seconds timeout
+        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds timeout for Render cold start
         
         const res = await fetch(`${targetUrl}/api/license/status`, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -128,12 +128,17 @@ window.testAndSaveConnection = async function() {
             localStorage.setItem('gonet_phone_server_ip', ip);
             activeServerUrl = targetUrl;
             showScreen('login');
+            errorDiv.textContent = "";
         } else {
             errorDiv.textContent = "السيرفر لا يستجيب بالشكل الصحيح. تأكد من أن السيرفر يعمل.";
             errorDiv.style.color = "var(--danger)";
         }
     } catch(e) {
-        errorDiv.textContent = "فشل الاتصال. تأكد من أن السيرفر يعمل، وأن العنوان مكتوب بشكل صحيح، وأن هاتفك متصل بالإنترنت.";
+        if (e.name === 'AbortError') {
+            errorDiv.textContent = "انتهت مهلة الاتصال (90 ثانية). يبدو أن السيرفر غير نشط حالياً أو لم يتمكن من العمل بالوقت المحدد.";
+        } else {
+            errorDiv.textContent = "فشل الاتصال. تأكد من أن السيرفر يعمل، وأن العنوان مكتوب بشكل صحيح، وأن هاتفك متصل بالإنترنت.";
+        }
         errorDiv.style.color = "var(--danger)";
     }
 }
