@@ -2,6 +2,20 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
+// Load local .env manually if it exists
+const dotenvPath = path.join(__dirname, '.env');
+if (fs.existsSync(dotenvPath)) {
+  const content = fs.readFileSync(dotenvPath, 'utf8');
+  content.split('\n').forEach(line => {
+    const parts = line.split('=');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim().replace(/^['"]|['"]$/g, '');
+      process.env[key] = val;
+    }
+  });
+}
+
 const DB_DIR = process.env.USER_DATA_PATH || path.join(__dirname, 'data');
 const DB_PATH = path.join(DB_DIR, 'mobileshop.db');
 
@@ -23,7 +37,12 @@ try {
   }
 });
 
+// Trigger synchronous database download from cloud before opening
+const sync = require('./sync');
+sync.downloadDbSync();
+
 const db = new Database(DB_PATH);
+sync.setDatabaseInstance(db);
 
 // Enable WAL mode for better performance
 db.pragma('journal_mode = WAL');

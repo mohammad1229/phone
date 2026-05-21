@@ -4,6 +4,22 @@ const path = require('path');
 const session = require('express-session');
 const fs = require('fs');
 
+// Load local .env manually if it exists
+const dotenvPath = path.join(__dirname, '.env');
+if (fs.existsSync(dotenvPath)) {
+  const content = fs.readFileSync(dotenvPath, 'utf8');
+  content.split('\n').forEach(line => {
+    const parts = line.split('=');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim().replace(/^['"]|['"]$/g, '');
+      process.env[key] = val;
+    }
+  });
+}
+
+const sync = require('./sync');
+
 // Automatic One-Time Database Wipe via Flag File
 const flagPath = path.join(__dirname, 'data', 'reset_db.flag');
 if (fs.existsSync(flagPath)) {
@@ -194,6 +210,19 @@ async function checkOnlineActivation() {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Express Write-Interceptor for Cloud DB Synchronization
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (res.statusCode >= 200 && res.statusCode < 300 && ['POST', 'PUT', 'DELETE'].includes(req.method)) {
+      const isExclude = req.path.startsWith('/api/settings/upload-logo') || req.path.startsWith('/api/restore') || req.path.startsWith('/api/logout') || req.path.startsWith('/api/login');
+      if (!isExclude) {
+        sync.scheduleDbSync();
+      }
+    }
+  });
+  next();
+});
 
 // License Check Middleware
 app.use((req, res, next) => {
@@ -1099,13 +1128,32 @@ const logoStorage = multer.diskStorage({
 
 const uploadLogoMiddleware = multer({ storage: logoStorage });
 
-app.post('/api/settings/upload-logo', requireAuth, uploadLogoMiddleware.single('logo'), (req, res) => {
+app.post('/api/settings/upload-logo', requireAuth, uploadLogoMiddleware.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'لم يتم اختيار ملف الشعار' });
     }
-    const logoUrl = '/uploads/' + req.file.filename;
+    
+    let logoUrl = '/uploads/' + req.file.filename;
+    
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const cloudUrl = await sync.uploadLogoToCloud(fileBuffer, req.file.originalname, req.file.mimetype);
+        if (cloudUrl) {
+          logoUrl = cloudUrl;
+          try {
+            fs.unlinkSync(req.file.path);
+          } catch(e) {}
+        }
+      } catch (uploadErr) {
+        console.error('⚠️ [Sync Logo] Failed to upload logo to Supabase, falling back to local file:', uploadErr.message);
+      }
+    }
+    
     db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('shop_logo', logoUrl);
+    sync.scheduleDbSync();
+    
     res.json({ success: true, logoUrl: logoUrl, message: 'تم رفع الشعار بنجاح!' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

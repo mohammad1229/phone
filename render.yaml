@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: phone-care-service
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+        placeholder: "https://your-project-id.supabase.co"
+      - key: SUPABASE_KEY
+        sync: false
+        placeholder: "Your Supabase service_role secret key"
+      - key: SUPABASE_BUCKET
+        value: phone-care-db
