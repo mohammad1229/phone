@@ -60,7 +60,8 @@ async function ensureBucketExists() {
       headers: {
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'apikey': SUPABASE_KEY
-      }
+      },
+      signal: AbortSignal.timeout(15000)
     });
 
     if (checkRes.status === 200) {
@@ -80,7 +81,8 @@ async function ensureBucketExists() {
         id: BUCKET_NAME,
         name: BUCKET_NAME,
         public: false
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     });
 
     if (createRes.ok) {
@@ -131,7 +133,8 @@ async function uploadDbToCloud() {
         'x-upsert': 'true',
         'Content-Type': 'application/octet-stream'
       },
-      body: fileBuffer
+      body: fileBuffer,
+      signal: AbortSignal.timeout(15000)
     });
 
     if (uploadRes.ok) {
@@ -260,7 +263,8 @@ async function downloadDbFromCloud() {
       headers: {
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'apikey': SUPABASE_KEY
-      }
+      },
+      signal: AbortSignal.timeout(15000)
     });
 
     if (res.status === 200) {

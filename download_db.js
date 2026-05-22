@@ -37,7 +37,8 @@ async function download() {
       headers: {
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'apikey': SUPABASE_KEY
-      }
+      },
+      signal: AbortSignal.timeout(15000)
     });
 
     if (res.status === 200) {
