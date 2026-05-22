@@ -37,7 +37,15 @@ function constructServerUrl(input) {
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Load saved server connection
-    const savedIp = localStorage.getItem('gonet_phone_server_ip');
+    let savedIp = localStorage.getItem('gonet_phone_server_ip');
+    const disconnected = localStorage.getItem('gonet_phone_disconnected');
+    
+    // Automatically default to the cloud URL if not set and not explicitly disconnected
+    if (!savedIp && disconnected !== 'true') {
+        savedIp = 'https://phone-care-service-ktes.onrender.com';
+        localStorage.setItem('gonet_phone_server_ip', savedIp);
+    }
+    
     if (savedIp) {
         document.getElementById('server-ip').value = savedIp;
         activeServerUrl = constructServerUrl(savedIp);
@@ -126,6 +134,7 @@ window.testAndSaveConnection = async function() {
         
         if (res.ok) {
             localStorage.setItem('gonet_phone_server_ip', ip);
+            localStorage.removeItem('gonet_phone_disconnected');
             activeServerUrl = targetUrl;
             showScreen('login');
             errorDiv.textContent = "";
@@ -367,6 +376,7 @@ window.clearSavedServer = function() {
         stopMobileCamera();
         localStorage.removeItem('gonet_phone_server_ip');
         localStorage.removeItem('gonet_phone_token');
+        localStorage.setItem('gonet_phone_disconnected', 'true');
         showScreen('connection');
     }
 }
